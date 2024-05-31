@@ -32,26 +32,36 @@ namespace StarRealms.Game
             Turn = 1;
             currentPlayerIndex = 0;
 
-            Players[currentPlayerIndex].takeATurn(2);
+            Players[currentPlayerIndex].TakeATurn(2);
             while (IsPlayersAlive())
             {
-                Console.WriteLine($"Turn {Turn}:{Players[currentPlayerIndex].Name} end his turn with {Players[currentPlayerIndex].Health}HP;");
                 Turn++;
                 currentPlayerIndex = (currentPlayerIndex + 1) % Players.Count;
-                Players[currentPlayerIndex].takeATurn();
+                Players[currentPlayerIndex].TakeATurn();
             }
             
             Console.WriteLine($"End");
         }
 
-        public Player getActivePlayer() { return Players[currentPlayerIndex]; }
-        public Player getEnemy() { return Players[(currentPlayerIndex + 1) % Players.Count]; }
+        public Player GetActivePlayer() { return Players[currentPlayerIndex]; }
+        public Player GetEnemy() { return Players[(currentPlayerIndex + 1) % Players.Count]; }
+        public Player GetEnemyWithBases()
+        {
+            foreach (Player player in Players)
+            {
+                if (player == GetActivePlayer()) continue;
+                else if (player.HaveBases())
+                    return player;
+                else return null;
+            }
+            return null;
+        }
         private bool IsPlayersAlive()
         {
             int aliveCount = 0;
             foreach (Player player in Players)
             {
-                if (player.isAlive())
+                if (player.IsAlive())
                     aliveCount++;
             }
             return aliveCount >= 2;
@@ -91,6 +101,7 @@ namespace StarRealms.Game
                                     case "Ship":
                                         deck.Add(new ShipCard
                                         {
+                                            CardType = Guide.CardTypes.Ship,
                                             CardName = reader.GetString(reader.GetOrdinal("Name")),
                                             Price = reader.GetInt32(reader.GetOrdinal("Price")),
 
@@ -108,6 +119,7 @@ namespace StarRealms.Game
                                     case "Base":
                                         deck.Add(new BaseCard
                                         {
+                                            CardType = Guide.CardTypes.Base,
                                             CardName = reader.GetString(reader.GetOrdinal("Name")),
                                             Price = reader.GetInt32(reader.GetOrdinal("Price")),
 
@@ -166,7 +178,7 @@ namespace StarRealms.Game
             for (int i = 0; i < 5; i++)
                 Market.Add(Deck.Dequeue());
         }
-        private List<MasterCard> ShuffleDeck(List<MasterCard> deck)
+        private static List<MasterCard> ShuffleDeck(List<MasterCard> deck)
         {
             Random rnd = new();
             for (var i = deck.Count - 1; i > 0; i--)
@@ -179,33 +191,7 @@ namespace StarRealms.Game
             return deck;
         }
 
-        public void ShowDeck()
-        {
-            foreach (var card in Deck)
-            {
-                card.ShowStats();
-            }
-            Console.WriteLine();
-            Console.WriteLine("********** Market **********");
-            foreach (var card in Market)
-            {
-                card.ShowStats();
-            }
-            Console.WriteLine();
-            foreach (var card in Researchers)
-            {
-                card.ShowStats();
-            }
-            Console.WriteLine();
-            Console.WriteLine("Player's decks");
-            Console.WriteLine();
-            foreach (var player in Players)
-            {
-                player.ShowDeck();
-            }
-        }
-
-        public void removeFromMarket(int index)
+        public void RemoveFromMarket(int index)
         {
             if (Deck.Count > 0)
                 Market[index] = Deck.Dequeue();

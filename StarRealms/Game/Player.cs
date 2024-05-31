@@ -1,7 +1,9 @@
 ﻿using Microsoft.Data.Sqlite;
 using StarRealms.Cards;
 using StarRealms.Utility;
+using System;
 using static StarRealms.Utility.Guide;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace StarRealms.Game
 {
@@ -14,20 +16,26 @@ namespace StarRealms.Game
         private int Gold { get; set; }
         private List<int> Damage { get; set; }
         public int DropCount { get; set; }
-        public int CardsOnTop { get; set; }
+        private int CardsOnTop { get; set; }
+        private int ExtraDamageToShips { get; set; }
+        private int ExtraDamageToBases { get; set; }
+        private int ExtraGoldPerShips { get; set; }
+        private int ExtraGoldPerBases { get; set; }
         private Queue<MasterCard> Deck { get; set; }
         private List<MasterCard> Hand { get; set; }
         private List<BaseCard> Bases { get; set; }
         private List<MasterCard> DiscardPile { get; set; }
-        private Dictionary<Fractions, int> FractionsList { get; set; }
+        public Dictionary<Fractions, int> FractionsList { get; private set; }
         private Dictionary<Fractions, List<Property>> InactiveFracProperties { get; set; }
         private List<Property> PropertiesToPlay { get; set; }
         private DecisionMaker DecisionMaker { get; set; }
 
+        private int DealtDamage {  get; set; }
+
         public Player(Game game, string name = "p1", int R_FracPriority = 100,
-                                                    int G_FracPriority = 33,
-                                                    int B_FracPriority = 33,
-                                                    int Y_FracPriority = 67,
+                                                    int G_FracPriority = 100,
+                                                    int B_FracPriority = 100,
+                                                    int Y_FracPriority = 100,
                                                     int G = 100,
                                                     int D = 100,
                                                     int H = 100,
@@ -40,6 +48,10 @@ namespace StarRealms.Game
             Damage = new List<int>();
             DropCount = 0;
             CardsOnTop = 0;
+            ExtraDamageToShips = 0;
+            ExtraDamageToBases = 0;
+            ExtraGoldPerShips = 0;
+            ExtraGoldPerBases = 0;
             Deck = new Queue<MasterCard>();
             Hand = new List<MasterCard>();
             Bases = new List<BaseCard>();
@@ -49,54 +61,26 @@ namespace StarRealms.Game
             PropertiesToPlay = new List<Property>();
             DecisionMaker = new DecisionMaker(R_FracPriority, G_FracPriority, B_FracPriority, Y_FracPriority, G, D, H, Agr);
 
+            DealtDamage = 0;
+
             InitDictionaries();
             InitStartDeck();
         }
 
-        public bool isAlive()
+        public bool IsAlive()
         {
             return Health > 0;
         }
-        public void takeATurn(int startMinusCards = 0)
+        public void TakeATurn(int startMinusCards = 0)
         {
             //Добор карт
-            if (Deck.Count >= CardsToTake)
-            {
-                for (int i = 0; i < CardsToTake - startMinusCards; i++)
-                    Hand.Add(Deck.Dequeue());
-            }
-            else
-            {
-                ReshuffleDeck();
-                int takeCount = Deck.Count >= CardsToTake ? CardsToTake : Deck.Count;
-                for (int i = 0; i < takeCount; i++)
-                    Hand.Add(Deck.Dequeue());
-            }
+            DrawCards(startMinusCards);
 
-            //Сброс
-            if (DropCount > 0)
-            {
-                if (Hand.Count > DropCount)
-                {
-                    Random rnd = new Random();
-                    for (int i = 0; i < DropCount; i++)
-                    {
-                        int index = rnd.Next(Hand.Count * 100) / 100;
-                        DiscardPile.Add(Hand[index]);
-                        Hand.RemoveAt(index);
-                    }
-                }
-                else
-                {
-                    DiscardPile.AddRange(Hand);
-                    Hand.Clear();
-                }
-            }
+            //Сброс карт
+            DiscardCards();
 
             //Розыгрыш карт из руки
-            foreach (MasterCard card in Hand)
-                card.Play(Game);
-
+            PlayCardsFromHand();
 
             //Использование утиль-свойства
             foreach (MasterCard card in Hand)
@@ -124,7 +108,88 @@ namespace StarRealms.Game
             EndTurn();
         }
 
+        //Конец хода - обнуление свойств, фракций, золота, урона, сброс карт
+        private void EndTurn()
+        {
+            DiscardPile.AddRange(Hand);
+            Hand.Clear();
+            Damage.Clear();
+            CardsOnTop = 0;
+            ExtraDamageToShips = 0;
+            ExtraDamageToBases = 0;
+            ExtraGoldPerShips = 0;
+            ExtraGoldPerBases = 0;
+            Gold = 0;
+            foreach (var key in FractionsList.Keys)
+                FractionsList[key] = 0;
+            foreach (var key in InactiveFracProperties.Keys)
+                InactiveFracProperties[key].Clear();
+            PropertiesToPlay.Clear();
+
+            GetInfo();
+            ShowCards();
+        }
+
         //методы для колоды
+        //Добор карт
+        private void DrawCards(int startMinusCards)
+        {
+            if (Deck.Count >= CardsToTake)
+            {
+                for (int i = 0; i < CardsToTake - startMinusCards; i++)
+                    Hand.Add(Deck.Dequeue());
+            }
+            else
+            {
+                ReshuffleDeck();
+                int takeCount = Deck.Count >= CardsToTake ? CardsToTake : Deck.Count;
+                for (int i = 0; i < takeCount; i++)
+                    Hand.Add(Deck.Dequeue());
+            }
+        }
+
+        /// <summary>
+        /// Сброс карт
+        /// </summary>
+        private void DiscardCards()
+        {
+            if (DropCount > 0)
+            {
+                if (Hand.Count > DropCount)
+                {
+                    Random rnd = new Random();//TODO
+                    for (int i = 0; i < DropCount; i++)
+                    {
+                        int index = rnd.Next(Hand.Count * 100) / 100;
+                        DiscardPile.Add(Hand[index]);
+                        Hand.RemoveAt(index);
+                    }
+                }
+                else
+                {
+                    DiscardPile.AddRange(Hand);
+                    Hand.Clear();
+                }
+            }
+        }
+
+        private void PlayCardsFromHand()
+        {
+            int startHandCount = Hand.Count;
+            int i = 0;
+            while(i < Hand.Count)
+            {
+                Hand[i].Play(Game);
+                if (Hand.Count == startHandCount)
+                    i++;
+                else
+                    startHandCount = Hand.Count;
+            }
+        }
+
+        /// <summary>
+        /// Перезамешивание карт из сброса в колоду
+        /// </summary>
         private void ReshuffleDeck()
         {
             foreach (var card in ShuffleDeck(DiscardPile))
@@ -164,7 +229,7 @@ namespace StarRealms.Game
             }
             Deck = new(ShuffleDeck(deck));
         }
-        private List<MasterCard> ShuffleDeck(List<MasterCard> deck)
+        private static List<MasterCard> ShuffleDeck(List<MasterCard> deck)
         {
             Random rnd = new();
             for (var i = deck.Count - 1; i > 0; i--)
@@ -192,10 +257,18 @@ namespace StarRealms.Game
         }
 
         //utility-методы
-        public void ShowDeck()
+        public void ShowCards()
         {
+            Console.WriteLine("Deck:");
             foreach (var card in Deck)
-                Console.WriteLine($"{card.CardName} {card.Gold}|{card.Damage}|{card.Heal} {Guide.GetReadableFractions(card.Fractions)}");
+                Console.WriteLine($"{card.CardName} | D{(card.Damage != null ? card.Damage : 0)}");
+            Console.WriteLine();
+            Console.WriteLine("Discard Pile:");
+            foreach (var card in DiscardPile)
+                Console.WriteLine($"{card.CardName} | D{(card.Damage != null ? card.Damage : 0)}");
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("................");
         }
         public void GetInfo()
         {
@@ -203,6 +276,8 @@ namespace StarRealms.Game
             Console.WriteLine($"{Health}|50 HP");
             Console.WriteLine($"{Gold}Gold");
             Console.WriteLine($"Bases:{Bases.Count}");
+            Console.WriteLine($"DealtDamage:{DealtDamage}");
+            Console.WriteLine("======================");
         }
 
 
@@ -210,6 +285,8 @@ namespace StarRealms.Game
         public void AddBase(BaseCard Base)
         {
             Bases.Add(Base);
+            Bases = [.. Bases.OrderByDescending(b => b.Strength)];
+            Hand.Remove(Base);
         }
 
         // Добавление стандартных ресурсов
@@ -259,8 +336,12 @@ namespace StarRealms.Game
         //Розыгрыш свойств
         private void PlayProperties()
         {
-            foreach (var property in PropertiesToPlay)
-                property.ActivateProperty(Game);
+            //TODO Возможно стоит сортировать свойства?
+            while (PropertiesToPlay.Count > 0)
+            {
+                PropertiesToPlay[0].ActivateProperty(Game);
+                PropertiesToPlay.RemoveAt(0);
+            }
         }
 
 
@@ -275,7 +356,7 @@ namespace StarRealms.Game
                 }
             return false;
         }
-        private Dictionary<int, MasterCard> getBuyableCardFromMarket()
+        private Dictionary<int, MasterCard> GetBuyableCardFromMarket()
         {
             Dictionary<int, MasterCard> buyable = new();
             for (int i = 0; i < Game.Market.Count; i++)
@@ -283,22 +364,53 @@ namespace StarRealms.Game
                     buyable.Add(i, Game.Market[i]);
             return buyable;
         }
+        private Dictionary<int, MasterCard> GetBuyableCardFromMarket(int MaxCost)
+        {
+            Dictionary<int, MasterCard> buyable = new();
+            for (int i = 0; i < Game.Market.Count; i++)
+                if (Game.Market[i].Price <= MaxCost)
+                    buyable.Add(i, Game.Market[i]);
+            return buyable;
+        }
         private void Buy()
         {
-            Dictionary<int, MasterCard> buyable = getBuyableCardFromMarket();
-            int buyFrom = DecisionMaker.WhatToBuy(getBuyableCardFromMarket());
+            if (ExtraGoldPerBases > 0)
+                Gold += ExtraGoldPerBases * Bases.Count;
+            if (ExtraGoldPerShips > 0)
+                Gold += ExtraGoldPerShips * Hand.Count;
 
-            DiscardPile.Add(buyable[buyFrom]);
-            Game.removeFromMarket(buyFrom);
+            Dictionary<int, MasterCard> buyable = GetBuyableCardFromMarket();
+            int buyFrom = DecisionMaker.WhatToBuy(buyable);
+
+            if (CardsOnTop > 0)
+            {
+                CardsOnTop--;
+                List<MasterCard> newDeck = [buyable[buyFrom]];
+                newDeck.AddRange(Deck);
+                Deck = new(newDeck);
+            }
+            else
+            {
+                DiscardPile.Add(buyable[buyFrom]);
+            }
+            Game.RemoveFromMarket(buyFrom);
             Gold -= buyable[buyFrom].Price;
         }
 
-        //Атака соперника (и/или его баз)
+        //Атаковать соперника (и/или его базы)
         private void Attack()
         {
+            if (ExtraDamageToShips > 0)
+                for (int i = 0; i < Hand.Count; i++)
+                    Damage.Add(ExtraDamageToShips);
+
+            if (ExtraDamageToBases > 0)
+                for (int i = 0; i < Bases.Count; i++)
+                    Damage.Add(ExtraDamageToBases);
+
             if (Damage.Count > 0)
             {
-                Player Enemy = Game.getEnemy();
+                Player Enemy = Game.GetEnemy();
                 if (Enemy.HaveBases())
                 {
                     List<BaseCard> EnemyBases = Enemy.GetActiveBases();
@@ -329,22 +441,8 @@ namespace StarRealms.Game
                 }
                 else
                     Enemy.TakeDamage(Damage);
+                DealtDamage = Damage.Sum();
             }
-        }
-
-        //Конец хода - обнуление свойств, фракций, золота, урона, сброс карт
-        private void EndTurn()
-        {
-            DiscardPile.AddRange(Hand);
-            Hand.Clear();
-            Damage.Clear();
-            CardsOnTop = 0;
-            Gold = 0;
-            foreach (var kvp in FractionsList)
-                FractionsList[kvp.Key] = 0;
-            foreach (var kvp in InactiveFracProperties)
-                InactiveFracProperties[kvp.Key].Clear();
-            PropertiesToPlay.Clear();
         }
 
         //Базы
@@ -394,7 +492,7 @@ namespace StarRealms.Game
 
         //Активация свойств
         //Выбор из двух и более
-        public Property? ChooseOne(List<Property> propertiesToChoose) => DecisionMaker.ChooseOneProperty(propertiesToChoose);
+        public Property ChooseOne(List<Property> propertiesToChoose) => DecisionMaker.ChooseOneProperty(propertiesToChoose);
 
         //А - добор карт
         public void TakeAdditionalCard(int count)
@@ -421,11 +519,127 @@ namespace StarRealms.Game
             }
         }
 
-        //U - утилизация (стартовые карты в приоритете)
-        public void UtilCard(int count)
+        //B - уничтожение базы противника
+        public void DestroyEnemyBase(Game game, int Counter)
         {
-
+            for (int i = 0; i < Counter; i++)
+                DecisionMaker.DestroyBase(game);
         }
 
+        //F - покупка из магазина без траты валюты
+        public void FreeBuy(int MaxCost)
+        {
+            Dictionary<int, MasterCard> buyable = GetBuyableCardFromMarket(MaxCost);
+            int buyFrom = DecisionMaker.WhatToBuy(buyable);
+
+            if (CardsOnTop > 0)
+            {
+                CardsOnTop--;
+                List<MasterCard> newDeck = [buyable[buyFrom]];
+                newDeck.AddRange(Deck);
+                Deck = new(newDeck);
+            }
+            else
+            {
+                DiscardPile.Add(buyable[buyFrom]);
+            }
+            Game.RemoveFromMarket(buyFrom);
+        }
+
+        //I - копирование (читай "повторный розыгрыш") корабля из руки
+        public void ShipImitation()
+        {
+            MasterCard CardForImitation = DecisionMaker.ShipImitation(Hand)!; //выбрал карту для копирования
+            CardForImitation.Play(Game); //разыграл копию
+            CheckFractionsProperies(); //проверил сработо ли какое-то ранее недоступное свойство
+        }
+
+        //M - удаление из маркета
+        public void RemoveFromMarket(int Counter)
+        {
+            for (int i = 0; i < Counter; i++)
+                Game.RemoveFromMarket(DecisionMaker.RemoveFromMarket(Game));
+        }
+
+        //S - Сброс карт (стартовых)
+        public int DropCard(int Counter)
+        {
+            int DropCount = 0;
+            int i = 0;
+            while (Counter > 0 && i < Hand.Count && DropCount < Counter)
+            {
+                if (Hand[i].CardName == "Разведчик" || Hand[i].CardName == "Штурмовик")
+                {
+                    DiscardPile.Add(Hand[i]);
+                    Hand.RemoveAt(i);
+                    DropCount++;
+                }
+                else i++;
+            }
+            return DropCount;
+        }
+
+        //T - купленную карту можно положить поверх колоды
+        public void AddCardsOnTopCount()
+        {
+            CardsOnTop++;
+        }
+
+        //U - утилизация карты
+        public int UtilCard(int Counter)
+        {
+            int utilCount = 0;
+            int i = 0;
+            if (DiscardPile.Count > 0)
+            {
+                while (Counter > 0 && i < DiscardPile.Count)
+                {
+                    if (DiscardPile[i].CardName == "Разведчик" || DiscardPile[i].CardName == "Штурмовик")
+                    {
+                        Game.Graveyard.Add(DiscardPile[i]);
+                        DiscardPile.RemoveAt(i);
+                        utilCount++;
+                    }
+                    else i++;
+                }
+            }
+
+            i = 0;
+            while (Counter > 0 && i < Hand.Count)
+            {
+                if (Hand[i].CardName == "Разведчик" || Hand[i].CardName == "Штурмовик")
+                {
+                    Game.Graveyard.Add(Hand[i]);
+                    Hand.RemoveAt(i);
+                    utilCount++;
+                }
+                else i++;
+            }
+            return utilCount;
+        }
+
+        //+S(D1) - Добавление 1 урона каждому кораблю
+        public void AddExtraDamageToShips(int Counter)
+        {
+            ExtraDamageToShips += Counter;
+        }
+
+        //+S(G1) - Добавление 1 золотого каждому кораблю
+        public void AddExtraGoldToShips(int Counter)
+        {
+            ExtraGoldPerShips += Counter;
+        }
+
+        //+B(D1) - Добавление 1 урона каждой базе
+        public void AddExtraDamageToBases(int Counter)
+        {
+            ExtraDamageToBases += Counter;
+        }
+
+        //+B(G1) - Добавление 1 золотого каждомй базе
+        public void AddExtraGoldToBases(int Counter)
+        {
+            ExtraGoldPerBases += Counter;
+        }
     }
 }

@@ -39,6 +39,11 @@
             return fractions;
         }
 
+        public static Fractions GetFraction(string FracCode)
+        {
+            return FractionsDict[FracCode];
+        }
+
         public static string GetReadableFractions(List<Fractions> fractions)
         {
             string stringFractions = "";

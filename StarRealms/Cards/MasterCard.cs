@@ -25,10 +25,12 @@ namespace StarRealms.Cards
         // разыгрыш карты
         public void Play(Game.Game game)
         {
-            Player actPlayer = game.getActivePlayer();
+            Player actPlayer = game.GetActivePlayer();
 
             if (CardType == Guide.CardTypes.Base)
+            {
                 actPlayer.AddBase((BaseCard)this);
+            }
 
             // добавление золота
             if (Gold != null && Gold > 0)
@@ -65,7 +67,7 @@ namespace StarRealms.Cards
             Random rnd = new Random();
             if (percent > 0 && percent < 100)
             {
-                Player actPlayer = game.getActivePlayer();
+                Player actPlayer = game.GetActivePlayer();
                 if (rnd.Next() * 100 < percent)
                     actPlayer.AddInitialProperties(UtilProperty!);
             }
