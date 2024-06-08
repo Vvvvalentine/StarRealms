@@ -7,27 +7,20 @@ namespace StarRealms.Cards
     {
         public string? CardName { get; set; }
         public int Price { get; set; }
-        public List<Guide.Fractions>? Fractions { get; set; }
+        public List<Guide.Fraction>? Fractions { get; set; }
         public Property? FracProperty { get; set; }
         public Property? InitialProperty { get; set; }
         public Property? UtilProperty { get; set; }
         public int? Gold { get; set; }
         public int? Damage { get; set; }
         public int? Heal { get; set; }
-        public Guide.CardTypes CardType { get; set; }
+        public Guide.CardType CardType { get; set; }
         public Guide.Adds AddFrom { get; set; }
 
-        public virtual void ShowStats()
-        {
-            Console.WriteLine($"{CardName} {Gold}|{Damage}|{Heal} {Guide.GetReadableFractions(Fractions)}");
-        }
-
         // разыгрыш карты
-        public void Play(Game.Game game)
+        public void Play(Player actPlayer)
         {
-            Player actPlayer = game.GetActivePlayer();
-
-            if (CardType == Guide.CardTypes.Base)
+            if (CardType == Guide.CardType.Base)
             {
                 actPlayer.AddBase((BaseCard)this);
             }
@@ -49,8 +42,6 @@ namespace StarRealms.Cards
             {
                 if (FracProperty != null)
                     actPlayer.AddFractionsAndProperties(Fractions, FracProperty);
-                else
-                    actPlayer.AddFractionsAndProperties(Fractions, new Property("X"));
             }
 
             if (InitialProperty != null)

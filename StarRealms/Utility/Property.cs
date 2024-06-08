@@ -85,7 +85,7 @@ namespace StarRealms.Utility
                     {
                         case "S":
                             string ShipBonusType = PlusMatch.Groups[2].Value[0].ToString();
-                            int ShipBonusValue = Convert.ToInt32(PlusMatch.Groups[2].Value[1]);
+                            int ShipBonusValue = Convert.ToInt32(PlusMatch.Groups[2].Value[1].ToString());
                             switch (ShipBonusType)
                             {
                                 case "D":
@@ -124,8 +124,8 @@ namespace StarRealms.Utility
                 return 1;
             }
 
-            // Паттерн 2: AN, где в строке ровно 2 символа, первый - буква, а второй - число
-            if (Regex.IsMatch(input, @"^[A-Za-z]\d$"))
+            // Паттерн 2: AN, где первый символ - буква (обозначение свойства), а второй - число (количество срабатываний)
+            if (Regex.IsMatch(input, @"^[A-Z](?:[1-9][0-9]?|0)$"))
             {
                 return 2;
             }
@@ -170,7 +170,7 @@ namespace StarRealms.Utility
                     activePlayer.TakeAdditionalCard(Counter);
                     break;
                 case "B": // Уничтожение базы противника
-                    activePlayer.DestroyEnemyBase(game, Counter);
+                    activePlayer.DestroyEnemyBase(Counter);
                     break;
                 case "F": // Бесплатная покупка корабля
                     activePlayer.FreeBuy(Counter);

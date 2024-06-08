@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using StarRealms.Cards;
 using StarRealms.Utility;
+using System;
 
 namespace StarRealms.Game
 {
@@ -12,69 +13,91 @@ namespace StarRealms.Game
         public Queue<ShipCard> Researchers { get; private set; }
         public List<MasterCard> Graveyard { get; private set; }
         public int Turn { get; private set; }
-        private int currentPlayerIndex;
+        private int currentPlayerIndex { get; set; }
+        private int playersCount { get; set; }
+        public ExcelManager excelManager { get; private set; }
 
         public Game(int numberOfPlayers = 2)
         {
             if (numberOfPlayers < 2)
                 throw new ArgumentException("Минмум два игрока");
+            else playersCount = numberOfPlayers;
 
             Players = new();
             Deck = new();
             Market = new();
             Graveyard = new();
             Researchers = new();
+            excelManager = new();
 
-            InitPlayers(numberOfPlayers);
+            InitPlayers(playersCount);
+        }
+        public Game(string FileName, StaticDecisionMaker DMForP1, StaticDecisionMaker DMForP2)
+        {
+            playersCount = 2;
+            Players = new();
+            Deck = new();
+            Market = new();
+            Graveyard = new();
+            Researchers = new();
+            excelManager = new(FileName);
+
+            FileName = FileName[(FileName.LastIndexOf("/") + 1)..];
+            FileName = FileName[0..FileName.IndexOf(".")];
+            InitPlayers([.. FileName.Split(" vs ")], DMForP1, DMForP2);
+        }
+
+        public string StartGame()
+        {
+            Market.Clear();
+            Graveyard.Clear();
+            PlayersRestart();
             InitDeck(); //инициализация обычной колоды, колоды исследователей и магазина
-            //ShowDeck();
 
             Turn = 1;
             currentPlayerIndex = 0;
 
-            Players[currentPlayerIndex].TakeATurn(2);
+            Players[currentPlayerIndex].TakeATurn( 2);
             while (IsPlayersAlive())
             {
                 Turn++;
-                currentPlayerIndex = (currentPlayerIndex + 1) % Players.Count;
+                currentPlayerIndex = (currentPlayerIndex + 1) % playersCount;
                 Players[currentPlayerIndex].TakeATurn();
             }
-            
-            Console.WriteLine($"End");
+
+            return Players[currentPlayerIndex].Name;
         }
 
-        public Player GetActivePlayer() { return Players[currentPlayerIndex]; }
-        public Player GetEnemy() { return Players[(currentPlayerIndex + 1) % Players.Count]; }
-        public Player GetEnemyWithBases()
+        private void PlayersRestart()
         {
-            foreach (Player player in Players)
-            {
-                if (player == GetActivePlayer()) continue;
-                else if (player.HaveBases())
-                    return player;
-                else return null;
-            }
-            return null;
+            foreach (Player P in Players)
+                P.Restart();
         }
-        private bool IsPlayersAlive()
-        {
-            int aliveCount = 0;
-            foreach (Player player in Players)
-            {
-                if (player.IsAlive())
-                    aliveCount++;
-            }
-            return aliveCount >= 2;
-        }
-
-
-        private void InitPlayers(int numberOfPlayers)
+        private void InitPlayers(List<string> PlayerNames, StaticDecisionMaker DMForP1, StaticDecisionMaker DMForP2)
         {
             Players = new List<Player>();
+            Players.Add(new Player(this, DMForP1, $"{PlayerNames[0]}-player"));
+            Players.Add(new Player(this, DMForP2, $"{PlayerNames[1]}-player"));
+            Players = Players.OrderBy(p => new Random().Next()).ToList();
+        }
+        private void InitPlayers(int numberOfPlayers)
+        {
+            List<StaticDecisionMaker> decisionMakers = new List<StaticDecisionMaker>();
+            // "Мозг" для одного игрока
+            decisionMakers.Add(new StaticDecisionMaker(ShPr: 1, BPr: 1, Rp: 100, Gp: 100, Bp: 100, Yp: 100, G: 100, D: 100, H: 100, Agr: 20));
+            // "Мозг" для другого игрока
+            decisionMakers.Add(new StaticDecisionMaker(ShPr: 1, BPr: 1, Rp: 100, Gp: 100, Bp: 100, Yp: 100, G: 100, D: 100, H: 100, Agr: 20));
+
+            // Эталон
+            //ShPr: 1, BPr: 1, Rp: 100, Gp: 100, Bp: 100, Yp: 100, G: 100, D: 100, H: 100, Agr: 20));
+
+            List<string> PlayerNames = ["S","B"];
+
+            Players = new List<Player>();
             for (int i = 0; i < numberOfPlayers; i++)
-                Players.Add(new Player(this, $"player {i}"));
-            Random rnd = new Random();
-            Players = Players.OrderBy(p => rnd.Next()).ToList();
+                Players.Add(new Player(this, decisionMakers[i], $"{PlayerNames[i]}-player"));
+
+            Players = Players.OrderBy(p => new Random().Next()).ToList();
         }
         private void InitDeck()
         {
@@ -101,7 +124,7 @@ namespace StarRealms.Game
                                     case "Ship":
                                         deck.Add(new ShipCard
                                         {
-                                            CardType = Guide.CardTypes.Ship,
+                                            CardType = Guide.CardType.Ship,
                                             CardName = reader.GetString(reader.GetOrdinal("Name")),
                                             Price = reader.GetInt32(reader.GetOrdinal("Price")),
 
@@ -119,7 +142,7 @@ namespace StarRealms.Game
                                     case "Base":
                                         deck.Add(new BaseCard
                                         {
-                                            CardType = Guide.CardTypes.Base,
+                                            CardType = Guide.CardType.Base,
                                             CardName = reader.GetString(reader.GetOrdinal("Name")),
                                             Price = reader.GetInt32(reader.GetOrdinal("Price")),
 
@@ -191,12 +214,33 @@ namespace StarRealms.Game
             return deck;
         }
 
+
+        private bool IsPlayersAlive()
+        {
+            int aliveCount = 0;
+            foreach (Player player in Players)
+            {
+                if (player.IsAlive())
+                    aliveCount++;
+            }
+            return aliveCount >= 2;
+        }
+        public Player GetActivePlayer() { return Players[currentPlayerIndex]; }
+        public Player GetEnemy() { return Players[(currentPlayerIndex + 1) % Players.Count]; }
+
+
         public void RemoveFromMarket(int index)
         {
             if (Deck.Count > 0)
+            {
+                Graveyard.Add(Market[index]);
                 Market[index] = Deck.Dequeue();
+            }
             else
+            {
+                Graveyard.Add(Market[index]);
                 Market.RemoveAt(index);
+            }
         }
     }
 }

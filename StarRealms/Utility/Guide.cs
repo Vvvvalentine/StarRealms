@@ -2,21 +2,21 @@
 {
     static class Guide
     {
-        public static readonly Dictionary<string, Fractions> FractionsDict = new()
+        public static readonly Dictionary<string, Fraction> FractionsDict = new()
         {
-            {"G", Fractions.Слизь},
-            {"B", Fractions.Торговая_федерация},
-            {"R", Fractions.Технокульт},
-            {"Y", Fractions.Звездная_империя}
+            {"B", Fraction.Торговая_федерация},
+            {"G", Fraction.Слизь},
+            {"R", Fraction.Технокульт},
+            {"Y", Fraction.Звездная_империя}
         };
 
-        public enum CardTypes
+        public enum CardType
         {
             Ship,
             Base
         }
 
-        public enum Fractions
+        public enum Fraction
         {
             Слизь,
             Торговая_федерация,
@@ -29,9 +29,9 @@
             Стандарт
         }
 
-        public static List<Fractions> GetFractions(string FracCode)
+        public static List<Fraction> GetFractions(string FracCode)
         {
-            List<Fractions> fractions = new();
+            List<Fraction> fractions = new();
             foreach (char c in FracCode)
             {
                 fractions.Add(FractionsDict[c.ToString()]);
@@ -39,12 +39,12 @@
             return fractions;
         }
 
-        public static Fractions GetFraction(string FracCode)
+        public static Fraction GetFraction(string FracCode)
         {
             return FractionsDict[FracCode];
         }
 
-        public static string GetReadableFractions(List<Fractions> fractions)
+        public static string GetReadableFractions(List<Fraction> fractions)
         {
             string stringFractions = "";
             if (fractions != null)
