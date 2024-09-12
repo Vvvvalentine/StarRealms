@@ -1,35 +1,113 @@
 ﻿using Microsoft.Data.Sqlite;
 using StarRealms.Cards;
 using StarRealms.Utility;
-using System;
 using static StarRealms.Utility.Guide;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace StarRealms.Game
 {
     internal class Player
     {
+        /// <summary>
+        /// Постоянное значение, показывающее, сколько карт брать в начале хода
+        /// </summary>
         const int CardsToTake = 5;
+
+        /// <summary>
+        /// Ссылка на игру – необходима для интеракции с магазином и противником
+        /// </summary>
         private Game Game { get; set; }
+
+        /// <summary>
+        /// Имя игрока
+        /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Количество очков влияния (здоровья)
+        /// </summary>
         public int Health { get; private set; }
+
+        /// <summary>
+        /// Количество доступных очков торговли
+        /// </summary>
         private int Gold { get; set; }
+
+        /// <summary>
+        /// Количество доступных очков боя
+        /// </summary>
         private List<int> Damage { get; set; }
+
+        /// <summary>
+        /// Количество карт, которые нужно сбросить в начале хода
+        /// </summary>
         public int DropCount { get; set; }
+
+        /// <summary>
+        /// Количество карт, которые можно положить на верхушку колоды
+        /// </summary>
         private int CardsOnTop { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private int ExtraDamageToShips { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
         private int ExtraDamageToBases { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
         private int ExtraGoldPerShips { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
         private int ExtraGoldPerBases { get; set; }
+
+        /// <summary>
+        /// Колода карт
+        /// </summary>
         private Queue<MasterCard> Deck { get; set; }
+
+        /// <summary>
+        /// Карты в руке
+        /// </summary>
         private List<MasterCard> Hand { get; set; }
+
+        /// <summary>
+        /// Перечень активированных баз
+        /// </summary>
         private List<BaseCard> Bases { get; set; }
+
+        /// <summary>
+        /// Стопка сброса
+        /// </summary>
         private List<MasterCard> DiscardPile { get; set; }
+
+        /// <summary>
+        /// Счетчик фракций
+        /// </summary>
         public Dictionary<Fraction, int> FractionsList { get; private set; }
+
+        /// <summary>
+        /// Перечень неактивных фракционных свойств
+        /// </summary>
         private Dictionary<Fraction, List<Property>> InactiveFracProperties { get; set; }
+
+        /// <summary>
+        /// Перечень свойств для активации
+        /// </summary>
         private List<Property> PropertiesToPlay { get; set; }
+
+        /// <summary>
+        /// "Мозг" игрока, обеспечивающий принятие решений
+        /// </summary>
         private StaticDecisionMaker DecisionMaker { get; set; }
-        public StatisticHolder StaticticHolder { get; set; }
+
+        /// <summary>
+        /// Сборщик статистики
+        /// </summary>
+        public StatisticHolder StaticticHolder { get; private set; }
 
         public Player(Game game, StaticDecisionMaker decisionMaker, string name = "player")
         {
@@ -59,7 +137,9 @@ namespace StarRealms.Game
             InitStartDeck();
         }
 
-
+        /// <summary>
+        /// Обнуляет поля игрока для перезапуска игры
+        /// </summary>
         public void Restart()
         {
             Health = 50;
@@ -85,7 +165,6 @@ namespace StarRealms.Game
             InitStartDeck();
         }
 
-
         /// <summary>
         /// Жив ли игрок?
         /// </summary>
@@ -101,35 +180,20 @@ namespace StarRealms.Game
         /// <param name="startMinusCards">параметр для начала игры, отвечающий за количество добираемых карт (чтобы первый игрок ходил тремя картами)</param>
         public void TakeATurn(int startMinusCards = 0)
         {
-            //Добор карт
-            DrawCards(startMinusCards);
-
-            //Сброс карт
-            DiscardCards();
-
-            //Активация баз
-            BaseActivation();
-
-            //Розыгрыш карт из руки
-            PlayCardsFromHand();
-
-            //Проверка активации фракционных свойств
-            CheckFractionsProperies();
-
-            //Розыгрыш свойств
-            PlayProperties();
-
-            //Использование утиль-свойств
-            UseUtilProps();
-
-            //Закупка
-            while (CanBuyFromMarket(Gold))
+            DrawCards(startMinusCards); //Добор карт
+            DiscardCards(); //Сброс карт
+            BaseActivation(); //Активация баз
+            PlayCardsFromHand(); //Розыгрыш карт из руки
+            CheckFractionsProperies(); //Проверка активации фракционных свойств
+            PlayProperties(); //Розыгрыш свойств
+            UseUtilProps(); //Использование утиль-свойств
+            while (CanBuyFromMarket(Gold)) //Закупка
                 Buy();
 
-            //На остатки закупаем исследователей
+            //Закупка исследователей за остатки
             if (Game.Researchers.Count > 0)
             {
-                int researcherPrice = Game.Researchers.FirstOrDefault().Price;
+                int researcherPrice = Game.Researchers.FirstOrDefault()!.Price;
                 while (Gold > researcherPrice && Game.Researchers.Count > 0)
                 {
                     DiscardPile.Add(Game.Researchers.Dequeue());
@@ -139,10 +203,8 @@ namespace StarRealms.Game
                     StaticticHolder.CardPurchased();
                 }
             }
-
-            Attack();
-
-            EndTurn();
+            Attack(); // Атака оппонента и/или его баз
+            EndTurn(); // Конец хода - обнуление параметров
         }
 
         // Этапы хода игрока ↓
@@ -291,15 +353,6 @@ namespace StarRealms.Game
         /// </summary>
         private void UseUtilProps()
         {
-            //foreach (MasterCard card in Hand)
-            //    if (DecisionMaker.UtilCard(card, this))
-            //        card.UtilProperty!.ActivateProperty(Game);
-
-            //foreach (BaseCard Base in Bases)
-            //    if (DecisionMaker.UtilCard(Base, this))
-            //        Base.UtilProperty!.ActivateProperty(Game);
-
-
             var processedCards = new HashSet<MasterCard>();
             while (true)
             {
@@ -330,7 +383,7 @@ namespace StarRealms.Game
                     break;
             }
 
-            if(Bases.Count > 0)
+            if (Bases.Count > 0)
             {
                 var processedBases = new HashSet<BaseCard>();
                 while (true)
@@ -548,9 +601,11 @@ namespace StarRealms.Game
             //GetInfo();
             //ShowCards();
 
-            StaticticHolder.EndTurn(Game.excelManager, this);
+            StaticticHolder.EndTurn();
         }
         // Этапы хода игрока ↑
+
+
 
         //Манипуляции с колодами ↓
         /// <summary>
@@ -696,6 +751,7 @@ namespace StarRealms.Game
         }
         // Добавление стандартных ресурсов ↑
 
+
         /// <summary>
         /// Получение урона
         /// </summary>
@@ -837,7 +893,7 @@ namespace StarRealms.Game
         {
             Dictionary<int, MasterCard> buyable = GetBuyableCardFromMarket(MaxCost, CardType.Ship);
             int buyFrom = DecisionMaker.WhatToBuy(buyable);
-            if(buyFrom != -1)
+            if (buyFrom != -1)
             {
                 if (CardsOnTop > 0)
                 {

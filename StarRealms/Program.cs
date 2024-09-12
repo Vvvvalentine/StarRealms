@@ -23,8 +23,8 @@ StaticDecisionMaker firstPlayerDM = new StaticDecisionMaker(ShPr: 1,
 StaticDecisionMaker secondPlayerDM = new StaticDecisionMaker(ShPr: 1,
                                                             BPr: 10,
                                                             Rp: 1,
-                                                            Gp: 100,
-                                                            Bp: 1,
+                                                            Gp: 1,
+                                                            Bp: 100,
                                                             Yp: 100,
                                                             G: 100,
                                                             D: 100,
@@ -46,12 +46,12 @@ StaticDecisionMaker secondPlayerDM = new StaticDecisionMaker(ShPr: 1,
 */
 
 //Game game = new Game(2);
-string Path = "../../../../../Results/";                Path += "R vs B_GY";
+string Path = "../../../../../Results/";                Path += "R vs B_BY";
 Path += ".xlsx";
 Game game = new Game(Path, firstPlayerDM, secondPlayerDM);
 Dictionary<string, int> winCounter = new Dictionary<string, int>();
 
-int TotalGames = 2000;
+int TotalGames = 5000;
 game.excelManager.InitGameData(TotalGames, game.Players);
 
 for (int i = 0; i < TotalGames; i++)
@@ -62,7 +62,7 @@ for (int i = 0; i < TotalGames; i++)
     else winCounter.Add(winner, 1);
 
     foreach(Player player in game.Players)
-        game.excelManager.AddPlayerDataToSheets(player);
+        game.excelManager.AddPlayersDataToSheets(player);
 }
 
 game.excelManager.SetWins(winCounter);

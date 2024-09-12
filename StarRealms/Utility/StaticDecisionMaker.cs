@@ -6,15 +6,24 @@ namespace StarRealms.Utility
 {
     internal class StaticDecisionMaker
     {
-        //Процент агрессии по отношению к базам (100 - атакует все базы, только потом игрока, 0 - игнорирует базы без таунта)
+        /// <summary>
+        /// Приоритет атаки баз
+        /// </summary>
         int Aggressiveness;
         
-        //Вероятности выбора фракции
+        /// <summary>
+        /// Приоритет фракции
+        /// </summary>
         private Dictionary<Fraction, int> FracPriority { get; set; }
 
+        /// <summary>
+        /// Приоритет типа карты
+        /// </summary>
         private Dictionary<CardType, int> CardTypePriority { get; set; }
 
-        //Вероятности выбора свойства карты
+        /// <summary>
+        /// Приоритет свойства карты
+        /// </summary>
         private Dictionary<string, int> PropertiesPriority { get; set; }
 
         public StaticDecisionMaker(int ShPr, int BPr, int Bp, int Gp, int Rp, int Yp, int G, int D, int H, int Agr = 20)

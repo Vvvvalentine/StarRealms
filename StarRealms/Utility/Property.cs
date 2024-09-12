@@ -20,7 +20,7 @@ namespace StarRealms.Utility
                 // X - нет свойства, скип
                 case 1:
                     break;
-                // AN - простое свойство с количеством срабатываний
+                // PN - простое свойство с количеством срабатываний
                 case 2:
                     ActivateSimpleProperty(Code, game);
                     break;
@@ -32,7 +32,7 @@ namespace StarRealms.Utility
                         NewProperty.ActivateProperty(game);
                     }
                     break;
-                // .../... (свойство на выбор - вилка)
+                // .../... свойство на выбор
                 case 4:
                     List<Property> PropertiesToChoose = new List<Property>();
                     foreach (string code in Code.Split("/"))
@@ -120,45 +120,33 @@ namespace StarRealms.Utility
         {
             // Паттерн 1: X (в строке только символ "X") - нет свойств
             if (Regex.IsMatch(input, @"^X$"))
-            {
                 return 1;
-            }
 
-            // Паттерн 2: AN, где первый символ - буква (обозначение свойства), а второй - число (количество срабатываний)
+            // Паттерн 2: PN, где первый символ - буква (обозначение свойства), а второй - число (количество срабатываний)
             if (Regex.IsMatch(input, @"^[A-Z](?:[1-9][0-9]?|0)$"))
-            {
                 return 2;
-            }
 
-            // Паттерн 3: ...,... (два свойства)
+            // Паттерн 3: ...,... два свойства, оба активировать
             if (Regex.IsMatch(input, @"^.+,.+$"))
-            {
                 return 3;
-            }
 
-            // Паттерн 4: .../... (свойство на выбор - вилка)
+            // Паттерн 4: .../... свойство на выбор
             if (Regex.IsMatch(input, @"^.+/.+$"))
-            {
                 return 4;
-            }
 
             // Паттерн 5: ...N(...) (определённое количество срабатываний свойства)
             if (Regex.IsMatch(input, @".+N\(.+\)"))
-            {
                 return 5;
-            }
 
             // Паттерн 6: +S(...) (прибавка характеристик кораблям / базам) (тут после плюса могут быть только буквы S и B)
             if (Regex.IsMatch(input, @"^\+[SsBb]\(.+\)$"))
-            {
                 return 6;
-            }
 
             // Если ни один паттерн не совпадает
             return 0;
         }
 
-        private int ActivateSimpleProperty(string Code, Game.Game game)
+        private static int ActivateSimpleProperty(string Code, Game.Game game)
         {
             Player activePlayer = game.GetActivePlayer();
             Player Enemy = game.GetEnemy();
@@ -205,7 +193,7 @@ namespace StarRealms.Utility
             return 0;
         }
 
-        private bool ConditionHandler(string FullCondition, Game.Game game)
+        private static bool ConditionHandler(string FullCondition, Game.Game game)
         {
             Match Match = new Regex(@"^([A-Z]+)(\d+)$").Match(FullCondition);
             string Condition = Match.Groups[1].Value; // свойство
@@ -218,6 +206,7 @@ namespace StarRealms.Utility
             }
             return false;
         }
+
         private static int MatchConditionPattern(string input, out Match match)
         {
             // Паттерн 1: сложный условный (?AN; N+; N-)

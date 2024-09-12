@@ -7,14 +7,49 @@ namespace StarRealms.Game
 {
     internal class Game
     {
+        /// <summary>
+        /// Очередь карт в колоде
+        /// </summary>
         public Queue<MasterCard> Deck { get; private set; }
+
+        /// <summary>
+        /// Список игроков
+        /// </summary>
         public List<Player> Players { get; private set; }
+
+        /// <summary>
+        /// Магазин карт
+        /// </summary>
         public List<MasterCard> Market { get; private set; }
+
+        /// <summary>
+        /// Набор искателей
+        /// </summary>
         public Queue<ShipCard> Researchers { get; private set; }
+
+        /// <summary>
+        /// «Кладбище» для утилизированных карт
+        /// </summary>
         public List<MasterCard> Graveyard { get; private set; }
+
+        /// <summary>
+        /// Номер хода
+        /// </summary>
         public int Turn { get; private set; }
+
+        /// <summary>
+        /// Номер активного игрока
+        /// </summary>
         private int currentPlayerIndex { get; set; }
+
+        /// <summary>
+        /// Количество игроков
+        /// </summary>
         private int playersCount { get; set; }
+
+        /// <summary>
+        /// Класс для работы с MS Excel
+        /// </summary>
         public ExcelManager excelManager { get; private set; }
 
         public Game(int numberOfPlayers = 2)
@@ -47,18 +82,24 @@ namespace StarRealms.Game
             InitPlayers([.. FileName.Split(" vs ")], DMForP1, DMForP2);
         }
 
+        /// <summary>
+        /// Функция для запуска партии
+        /// </summary>
+        /// <returns>Имя победителя</returns>
         public string StartGame()
         {
-            Market.Clear();
-            Graveyard.Clear();
-            PlayersRestart();
-            InitDeck(); //инициализация обычной колоды, колоды исследователей и магазина
+            Market.Clear(); // Отчистка магазина
+            Graveyard.Clear(); // Отчистка "кладбища" карт
+
+            // (для удобной работы с итерациями)
+            PlayersRestart(); // Отчистка параметров игроков
+            InitDeck(); // Инициализация игровых колод
 
             Turn = 1;
             currentPlayerIndex = 0;
 
-            Players[currentPlayerIndex].TakeATurn( 2);
-            while (IsPlayersAlive())
+            Players[currentPlayerIndex].TakeATurn(2); // Первый игрок разыгрывает 3 карты
+            while (PlayersAlive())
             {
                 Turn++;
                 currentPlayerIndex = (currentPlayerIndex + 1) % playersCount;
@@ -215,7 +256,7 @@ namespace StarRealms.Game
         }
 
 
-        private bool IsPlayersAlive()
+        private bool PlayersAlive()
         {
             int aliveCount = 0;
             foreach (Player player in Players)

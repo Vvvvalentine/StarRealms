@@ -7,17 +7,56 @@ namespace StarRealms.Utility
 {
     internal class StatisticHolder
     {
+        /// <summary>
+        /// Потрачено очков торговли
+        /// </summary>
         public List<int> GoldSpent { get; private set; }
+        
+        /// <summary>
+        /// Куплено карт
+        /// </summary>
         public List<int> PurchasedCardsCounter { get; private set; }
+
+        /// <summary>
+        /// Все доступные очки боя до атаки
+        /// </summary>
         public List<int> AllAvailableDamage {  get; private set; }
+
+        /// <summary>
+        /// Очки боя, пришедшиеся на противника
+        /// </summary>
         public List<int> DamageToEnemy { get; private set; }
+
+        /// <summary>
+        /// Очки боя, заблокированные базами
+        /// </summary>
         public List<int> DamageTakenByBases {  get; private set; }
+
+        /// <summary>
+        /// Очков влияния восстановлено
+        /// </summary>
         public List<int> Healed {  get; private set; }
+
+        /// <summary>
+        /// Карт сыграно
+        /// </summary>
         public List<int> PlayedCardsCounter {  get; private set; }
+
+        /// <summary>
+        /// Номер хода
+        /// </summary>
         public int Turn { get; private set; }
 
+        /// <summary>
+        /// Сыграно фракций
+        /// </summary>
         public List<Dictionary<Fraction, int>> FractionsPlayed { get; private set; }
-        public Dictionary<string, int> CardsStatistic { get; private set; } // название карты, количество её использования
+
+        /// <summary>
+        /// Сыграно отдельных карт
+        /// </summary>
+        public Dictionary<string, int> CardsStatistic { get; private set; }
+        //        название карты, количество её использования
 
         public StatisticHolder()
         {
@@ -129,29 +168,6 @@ namespace StarRealms.Utility
 
         public void EndTurn()
         {
-            if (AllAvailableDamage.Count != Turn)
-                AllAvailableDamage.Add(0);
-
-            if (DamageToEnemy.Count != Turn)
-                DamageToEnemy.Add(0);
-
-            if (DamageTakenByBases.Count != Turn)
-                DamageTakenByBases.Add(0);
-
-            if (Healed.Count != Turn)
-                Healed.Add(0);
-
-            if (FractionsPlayed.Count != Turn)
-                FractionsPlayed.Add(InitFractionsPlayedDict());
-
-            if (PurchasedCardsCounter.Count != Turn)
-                PurchasedCardsCounter.Add(0);
-
-            Turn++;
-        }
-
-        public void EndTurn(ExcelManager excelManager, Player player)
-        {
             if (GoldSpent.Count != Turn)
                 GoldSpent.Add(0);
 
@@ -244,9 +260,5 @@ namespace StarRealms.Utility
             else
                 PurchasedCardsCounter.Add(1);
         }
-
-
-
-
     }
 }

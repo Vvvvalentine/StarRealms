@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="StarRealms.Cards.MasterCard">
+    <Position X="0.75" Y="0.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAQAACAAQAAAACAAAAAAAAAAAgAAAEEgAAAAAAAhAU=</HashCode>
+      <FileName>Cards\MasterCard.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Game.Game">
+    <Position X="4.5" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACACEAACCogAAAAAgCAQAgAAAihAAAAABAAAAQAAA=</HashCode>
+      <FileName>Game\Game.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Game.Player">
+    <Position X="6.25" Y="0.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>tWpIiECACGAWCFCAUAABFFRiEIgGTEFBAAhQhCAcASk=</HashCode>
+      <FileName>Game\Player.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Utility.ExcelManager">
+    <Position X="11.5" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAAAAAAEAAAAAAAAAAABAAAAAAgAAAgQgAAAAJAAQA=</HashCode>
+      <FileName>Utility\ExcelManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Utility.Guide" Collapsed="true">
+    <Position X="2.75" Y="0.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Enum Name="StarRealms.Utility.Guide.CardType" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Utility\Guide.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="StarRealms.Utility.Guide.Fraction" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Utility\Guide.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="StarRealms.Utility.Guide.Adds" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Utility\Guide.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAJAAAAAAA=</HashCode>
+      <FileName>Utility\Guide.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Utility.Property">
+    <Position X="2.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAABAAAIAAAAAAAAAgAAAAAAAAAACAAAAAAAAAAAQ=</HashCode>
+      <FileName>Utility\Property.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Cards.ShipCard" Collapsed="true">
+    <Position X="0.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Cards\ShipCard.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Cards.BaseCard">
+    <Position X="2.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAEAAAAAAABAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Cards\BaseCard.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Utility.StaticDecisionMaker">
+    <Position X="8" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAAABACCABABEQAEBABAAAACAQAAABAAAAAgAAA=</HashCode>
+      <FileName>Utility\StaticDecisionMaker.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StarRealms.Utility.StatisticHolder">
+    <Position X="9.75" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAICAAAAEAAAgBAAAAVLBAAAAAAAQAAQAAAAEAAAFSQ=</HashCode>
+      <FileName>Utility\StatisticHolder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

@@ -2,19 +2,13 @@
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using StarRealms.Game;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Numerics;
-using System.Reflection.Emit;
-using System.Text;
 
 namespace StarRealms.Utility
 {
     internal class ExcelManager
     {
-        string FileName;
-        string FirstPlayer;
+        private string FileName { get; set; }
+        private string FirstPlayer { get; set; }
 
         public ExcelManager() { FileName = ""; FirstPlayer = ""; }
         public ExcelManager(string Path)
@@ -333,7 +327,7 @@ namespace StarRealms.Utility
             }
         }
 
-        public void AddPlayerDataToSheets(Player player)
+        public void AddPlayersDataToSheets(Player player)
         {
             AddPlayerDataToFirstSheet(player);
             AddPlayerDataToSecondSheet(player);
